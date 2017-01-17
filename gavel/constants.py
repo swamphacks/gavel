@@ -39,7 +39,7 @@ magic link to the judging system.
 
 DO NOT SHARE this email with others, as it contains your personal magic link.
 
-To access the system, visit [title]http://swamphacks.herokuapp.com{link}.
+To access the system, visit http://swamphacks-judging1.herokuapp.com{link}.
 
 Once you're in, please take the time to read the welcome message and
 instructions before continuing.
