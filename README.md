@@ -2,8 +2,12 @@
 
 **Gavel** is a project expo judging system.
 
-It was originally built for HackMIT and first used at HackMIT 2015. It's been
-used at a number of other events since then.
+Gavel was originally built for HackMIT and first used at HackMIT 2015. It has
+been used by [dozens][users] of other events since then.
+
+**If you use Gavel for your event, please add yourself to [this list][users]!
+It only takes a minute, and knowing that Gavel is helping real events helps
+keep us going <3**
 
 [![Join the chat at https://gitter.im/anishathalye/gavel](https://badges.gitter.im/anishathalye/gavel.svg)](https://gitter.im/anishathalye/gavel?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -17,6 +21,17 @@ used at a number of other events since then.
 
 See the demo video
 [here](http://www.anishathalye.com/2016/09/19/gavel-an-expo-judging-system/)!
+
+## Users
+
+See [here][users] for a list of events that have used Gavel in the past.
+
+**If you use Gavel for your event, please add yourself to the list! It only
+takes a minute, and knowing that Gavel is helping real events helps keep us
+going <3**
+
+and adding yourself to the list helps keep me motivated to continue
+working on the software :)
 
 ## Design
 
@@ -51,7 +66,7 @@ The latest stable version is the `master` branch (and it's signed and tagged).
 Development happens in the `develop` branch.
 
 The web application is written in **Python 3** using Flask. It also uses NumPy
-and SciPy for math stuff. Doing a `pip install -r requirements.txt` should
+and SciPy for math stuff. Doing a `pip --no-cache-dir install -r requirements.txt` should
 install all the dependencies.
 
 The application uses Postgres for the database, so you need to have that on
@@ -60,9 +75,14 @@ gavel` (unless you're using a different database name). Before you use the app,
 you need to initialize the database by running `python initialize.py`. **Note
 that Gavel does not preserve database schema compatibility between versions.**
 
+In order to send emails, you'll need to install Redis.
+
 When testing, you can run the app with `python runserver.py`. In production,
 you should use something like [Gunicorn][gunicorn] to serve this. You can run
 the app with `gunicorn -b :<PORT> -w <number of workers> gavel:app`.
+
+For sending emails, you'll also need to start a celery worker with `celery -A
+gavel:celery worker`.
 
 ## Configuration
 
@@ -74,6 +94,12 @@ variables. There's more detailed documentation in `config.template.yaml`.
 
 If you don't want to use the config file and use only environment variables,
 set the environment variable `IGNORE_CONFIG_FILE=true`.
+
+## Troubleshooting
+
+See the [troubleshooting
+guide](https://github.com/anishathalye/gavel/wiki/Troubleshooting) in the Gavel
+wiki.
 
 ## Use
 
@@ -114,12 +140,6 @@ quality (Mu).
 Interested in hacking on Gavel? Awesome. See [DEVELOPMENT.md][development] for
 a dev setup guide.
 
-## Users
-
-See [here](https://github.com/anishathalye/gavel/wiki/Users) for a list of
-groups that have used Gavel in the past. If you use Gavel for anything, please
-add yourself to the list (anyone can edit it)!
-
 ## Notes
 
 If you do end up using this for your competition or hackathon, I would love to
@@ -132,9 +152,23 @@ If anyone has questions, feel free to email Anish (me@anishathalye.com).
 Do you have a feature request, bug report, or patch? Great! See
 [CONTRIBUTING.md][contributing] for information on what you can do about that.
 
+## Citation
+
+If you use Gavel in any way in academic work, please cite the following:
+
+```
+@misc{athalye2016gavel,
+  author = {Anish Athalye},
+  title = {Gavel},
+  year = {2016},
+  howpublished = {\url{https://github.com/anishathalye/gavel}},
+  note = {commit xxxxxxx}
+}
+```
+
 ## License
 
-Copyright (c) 2015-2016 Anish Athalye. Released under AGPLv3. See
+Copyright (c) 2015-2018 Anish Athalye. Released under AGPLv3. See
 [LICENSE.txt][license] for details.
 
 [blog-1]: http://www.anishathalye.com/2015/03/07/designing-a-better-judging-system/
@@ -145,3 +179,4 @@ Copyright (c) 2015-2016 Anish Athalye. Released under AGPLv3. See
 [development]: DEVELOPMENT.md
 [email]: mailto:me@anishathalye.com
 [gunicorn]: http://gunicorn.org/
+[users]: https://github.com/anishathalye/gavel/wiki/Users

@@ -10,6 +10,9 @@ from flask import (
     url_for,
 )
 import urllib.parse
+import xlrd
+
+ALLOWED_EXTENSIONS = set(['csv', 'xlsx', 'xls'])
 
 @app.route('/admin/')
 @utils.requires_auth
@@ -50,12 +53,16 @@ def admin():
 def item():
     action = request.form['action']
     if action == 'Submit':
-        csv = request.form['data']
-        data = utils.data_from_csv_string(csv)
-        for row in data:
-            _item = Item(*row)
-            db.session.add(_item)
-        db.session.commit()
+        data = parse_upload_form()
+        if data:
+            # validate data
+            for index, row in enumerate(data):
+                if len(row) != 3:
+                    return utils.user_error('Bad data: row %d has %d elements (expecting 3)' % (index + 1, len(row)))
+            for row in data:
+                _item = Item(*row)
+                db.session.add(_item)
+            db.session.commit()
     elif action == 'Prioritize' or action == 'Cancel':
         item_id = request.form['item_id']
         target_state = action == 'Prioritize'
@@ -73,15 +80,38 @@ def item():
             Item.query.filter_by(id=item_id).delete()
             db.session.commit()
         except IntegrityError as e:
-            return render_template('error.html', message=str(e))
+            return utils.server_error(str(e))
     return redirect(url_for('admin'))
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def parse_upload_form():
+    f = request.files.get('file')
+    data = []
+    if f and allowed_file(f.filename):
+        extension = str(f.filename.rsplit('.', 1)[1].lower())
+        if extension == "xlsx" or extension == "xls":
+            workbook = xlrd.open_workbook(file_contents=f.read())
+            worksheet = workbook.sheet_by_index(0)
+            data = list(utils.cast_row(worksheet.row_values(rx, 0, 3)) for rx in range(worksheet.nrows) if worksheet.row_len(rx) == 3)
+        elif extension == "csv":
+            data = utils.data_from_csv_string(f.read().decode("utf-8"))
+    else:
+        csv = request.form['data']
+        data = utils.data_from_csv_string(csv)
+    return data
+
 
 @app.route('/admin/item_patch', methods=['POST'])
 @utils.requires_auth
 def item_patch():
     item = Item.by_id(request.form['item_id'])
     if not item:
-        return render_template('error.html', message='Item not found.')
+        return utils.user_error('Item %s not found ' % request.form['item_id'])
     if 'location' in request.form:
         item.location = request.form['location']
     if 'name' in request.form:
@@ -96,24 +126,28 @@ def item_patch():
 def annotator():
     action = request.form['action']
     if action == 'Submit':
-        csv = request.form['data']
-        data = utils.data_from_csv_string(csv)
+        data = parse_upload_form()
         added = []
-        for row in data:
-            annotator = Annotator(*row)
-            added.append(annotator)
-            db.session.add(annotator)
-        db.session.commit()
-        try:
-            email_invite_links(added)
-        except Exception as e:
-            return render_template('error.html', message=str(e))
+        if data:
+            # validate data
+            for index, row in enumerate(data):
+                if len(row) != 3:
+                    return utils.user_error('Bad data: row %d has %d elements (expecting 3)' % (index + 1, len(row)))
+            for row in data:
+                annotator = Annotator(*row)
+                added.append(annotator)
+                db.session.add(annotator)
+            db.session.commit()
+            try:
+                email_invite_links(added)
+            except Exception as e:
+                return utils.server_error(str(e))
     elif action == 'Email':
         annotator_id = request.form['annotator_id']
         try:
             email_invite_links(Annotator.by_id(annotator_id))
         except Exception as e:
-            return render_template('error.html', message=str(e))
+            return utils.server_error(str(e))
     elif action == 'Disable' or action == 'Enable':
         annotator_id = request.form['annotator_id']
         target_state = action == 'Enable'
@@ -126,7 +160,7 @@ def annotator():
             Annotator.query.filter_by(id=annotator_id).delete()
             db.session.commit()
         except IntegrityError as e:
-            return render_template('error.html', message=str(e))
+            return utils.server_error(str(e))
     return redirect(url_for('admin'))
 
 @app.route('/admin/setting', methods=['POST'])
@@ -145,7 +179,7 @@ def setting():
 def item_detail(item_id):
     item = Item.by_id(item_id)
     if not item:
-        return render_template('error.html', message='Item not found.')
+        return utils.user_error('Item %s not found ' % item_id)
     else:
         assigned = Annotator.query.filter(Annotator.next == item).all()
         viewed_ids = {i.id for i in item.viewed}
@@ -167,7 +201,7 @@ def item_detail(item_id):
 def annotator_detail(annotator_id):
     annotator = Annotator.by_id(annotator_id)
     if not annotator:
-        return render_template('error.html', message='Annotator not found.')
+        return utils.user_error('Annotator %s not found ' % annotator_id)
     else:
         seen = Item.query.filter(Item.viewed.contains(annotator)).all()
         ignored_ids = {i.id for i in annotator.ignore}
@@ -180,9 +214,13 @@ def annotator_detail(annotator_id):
         return render_template(
             'admin_annotator.html',
             annotator=annotator,
+            login_link=annotator_link(annotator),
             seen=seen,
             skipped=skipped
         )
+
+def annotator_link(annotator):
+        return urllib.parse.urljoin(settings.BASE_URL, url_for('login', secret=annotator.secret))
 
 def email_invite_links(annotators):
     if settings.DISABLE_EMAIL or annotators is None:
@@ -192,9 +230,9 @@ def email_invite_links(annotators):
 
     emails = []
     for annotator in annotators:
-        link = urllib.parse.urljoin(settings.BASE_URL, url_for('login', secret=annotator.secret))
+        link = annotator_link(annotator)
         raw_body = settings.EMAIL_BODY.format(name=annotator.name, link=link)
         body = '\n\n'.join(utils.get_paragraphs(raw_body))
         emails.append((annotator.email, settings.EMAIL_SUBJECT, body))
 
-    utils.send_emails(emails)
+    utils.send_emails.delay(emails)

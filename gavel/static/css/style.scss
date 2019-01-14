@@ -52,6 +52,14 @@ p {
   white-space: pre-wrap;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  margin: 0;
+}
+
 input,
 textarea {
   font-family: $body-font;
@@ -280,6 +288,15 @@ input[type=submit].neutral {
 
 .prioritized {
   background-color: $prioritized-color;
+}
+
+.upload-container {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.field {
+    padding-right: 1rem;
 }
 
 #footer {

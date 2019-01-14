@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016 Anish Athalye (me@anishathalye.com)
+# Copyright (c) 2015-2018 Anish Athalye (me@anishathalye.com)
 #
 # This software is released under AGPLv3. See the included LICENSE.txt for
 # details.
@@ -23,6 +23,11 @@ scss = Bundle(
 )
 assets.register('scss_all', scss)
 
+from celery import Celery
+app.config['CELERY_BROKER_URL'] = settings.BROKER_URI
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
+
 from gavel.models import db
 db.app = app
 db.init_app(app)
@@ -30,3 +35,12 @@ db.init_app(app)
 import gavel.template_filters # registers template filters
 
 import gavel.controllers # registers controllers
+
+# send usage stats
+import gavel.utils
+gavel.utils.send_telemetry('gavel-boot', {
+    'base-url': settings.BASE_URL or '',
+    'min-views': settings.MIN_VIEWS,
+    'timeout': settings.TIMEOUT,
+    'disable-email': settings.DISABLE_EMAIL
+})

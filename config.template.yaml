@@ -7,8 +7,10 @@ admin_password: null
 
 # can also be specified as the 'BASE_URL' environment variable
 #
-# this must be set for emailed links to work properly. if you are setting
-# DISABLE_EMAIL, you can set this setting to '_unused_' (or anything else).
+# this is the base url of the judging app, e.g. 'https://judging.example.com/'.
+# make sure to have a trailing slash. this must be set for emailed links to
+# work properly. if you are setting DISABLE_EMAIL, you can set this setting to
+# '_unused_' (or anything else).
 base_url: null
 
 # can also be specified as the 'EMAIL_FROM' environment variable
@@ -16,6 +18,13 @@ base_url: null
 # if you are setting DISABLE_EMAIL, you can set this setting to '_unused_' (or
 # anything else).
 email_from: null
+
+# can also be specified as the 'EMAIL_USER' environment variable
+#
+# this is the username that'll be used for SMTP authentication. if you are
+# setting DISABLE_EMAIL, you can set this setting to '_unused_' (or anything
+# else).
+email_user: null
 
 # can also be specified as the 'EMAIL_PASSWORD' environment variable
 #
@@ -36,6 +45,10 @@ secret_key: null
 # can also be specified as the 'DATABASE_URL' or 'DB_URI' environment variable
 # defaults to 'postgresql://localhost/gavel'
 db_uri: null
+
+# can also be specified as the 'REDIS_URL' or 'BROKER_URI' environment variable
+# defaults to 'redis://localhost:6379/0'
+broker_uri: null
 
 # can also be specified as the 'PORT' environment variable
 # defaults to '5000'
@@ -98,6 +111,13 @@ wait_message: null
 # setting this to true disables email functionality.
 disable_email: null
 
+# can also be specified as the 'EMAIl_AUTH_MODE' environment variable
+# defaults to 'tls'
+#
+# can either be 'tls' or 'ssl'. if you are setting DISABLE_EMAIL, you can set
+# this setting to '_unused_' (or anything else).
+email_auth_mode: null
+
 # can also be specified as the 'EMAIL_HOST' environment variable
 # defaults to 'smtp.gmail.com'
 #
@@ -105,6 +125,9 @@ disable_email: null
 # https://www.google.com/settings/security/lesssecureapps. if at any point,
 # your account gets locked, visiting this link may help:
 # http://www.google.com/accounts/DisplayUnlockCaptcha.
+#
+# see the troubleshooting guide for more help:
+# https://github.com/anishathalye/gavel/wiki/Troubleshooting
 email_host: null
 
 # can also be specified as the 'EMAIL_PORT' environment variable
@@ -134,3 +157,12 @@ email_subject: null
 # paragraphs. it's recommended to use the YAML multiline string syntax when
 # overriding this.
 email_body: null
+
+# can also be specified as the 'SEND_STATS' environment variable
+# defaults to 'True'
+#
+# this setting determines whether usage stats are reported. if you can, please
+# leave this enabled. if you absolutely need to disable this, please add your
+# event to this list (https://github.com/anishathalye/gavel/wiki/Users), at the
+# very least.
+send_stats: null
